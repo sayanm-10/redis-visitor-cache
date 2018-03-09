@@ -1,0 +1,25 @@
+{
+  "name": "redis-visitor-cache",
+  "version": "1.0.0",
+  "description": "Build a redis cache that returns the last 20 visits to an API",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sayanm-10/redis-visitor-cache.git"
+  },
+  "author": "Sayan Mukherjee",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sayanm-10/redis-visitor-cache/issues"
+  },
+  "homepage": "https://github.com/sayanm-10/redis-visitor-cache#readme",
+  "dependencies": {
+    "bluebird": "^3.5.1",
+    "express": "^4.16.2",
+    "redis": "^2.8.0"
+  }
+}
