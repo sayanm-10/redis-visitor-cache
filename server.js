@@ -1,13 +1,16 @@
 const express = require("express");
 const app = express();
-const UserData = require('./user_data.json');
+const user = require("./user.js");
+//const UserData = require('./user_data.json');
 
 app.get("/api/people/:id", async (req, res) => {
-    
+    const data = user.getById(req.params.id);
+    console.log(data);
+    res.status(200).json(data);
 });
 
 app.get('/api/people/history', async (req, res) => {
-    res.status(200).json(UserData);
+    res.status(200);
 });
 
 app.get('*', (req, res) => {
