@@ -5,6 +5,7 @@ const unflatten = flat.unflatten;
 const redisClient = redis.createClient();
 const UserData = require('./user_data.json');
 const MAX_CACHE_LENGTH = 20;
+let user_rank = 0;
 
 bluebird.promisifyAll(redis.RedisClient.prototype);
 bluebird.promisifyAll(redis.Multi.prototype);
@@ -21,14 +22,9 @@ const getById = async (id) => {
 
         // cache user in redis or return {}
         if(typeof user !== "undefined" && user.length > 0) {
-            const cacheLength = await redisClient.llenAsync("users");
-            
-            if (cacheLength > MAX_CACHE_LENGTH - 1) { // limit redis cache size 
-                await redisClient.lpopAsync("users"); // removes first entry in list
-            }
-            
             const jsonUser = JSON.stringify(user);
-            let redisUserCache = await redisClient.rpush("users", jsonUser);
+            user_rank = user_rank + 1;
+            let redisUserCache = await redisClient.zadd("users", user_rank, jsonUser); // adding asynchronously messes rank
         }
     } catch (error) {
         console.log(error);
@@ -40,10 +36,14 @@ const getById = async (id) => {
 // return redis cache [limit 20]
 const getHistory = async () => {
     let cachedUsers;
+
     try {
-        cachedUsers = await redisClient.lrangeAsync("users", 0, MAX_CACHE_LENGTH - 1);
+        let redisCacheSize = await redisClient.zcountAsync("users", "-inf", "+inf");
+        // fetch 20 top ranked itemss
+        cachedUsers = await redisClient.zrevrangebyscoreAsync("users", redisCacheSize, redisCacheSize - MAX_CACHE_LENGTH + 1);
     } catch (error) {
         console.log(error);
+        throw error;
     }
 
     return cachedUsers;
