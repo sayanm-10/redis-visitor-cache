@@ -1,7 +1,16 @@
 const express = require("express");
 const app = express();
 const user = require("./user.js");
-//const UserData = require('./user_data.json');
+
+const DELAY = 5000; // delay to return promise in ms
+
+const delayGetById = (id) => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve(user.getById(id));
+      }, DELAY);
+    });
+  };
 
 app.get('/api/people/history', async (req, res) => {
     try {
@@ -9,7 +18,7 @@ app.get('/api/people/history', async (req, res) => {
         if (typeof history !== "undefined" && history.length > 0) {
             res.status(200).json(history);
         } else {
-            res.status(404).json({error: "History is written by victors!"});
+            res.status(404).json({error: "History is written by visitors!"});
         }
     } catch (err) {
         res.status(500);
@@ -19,7 +28,16 @@ app.get('/api/people/history', async (req, res) => {
 
 app.get("/api/people/:id", async (req, res) => {
     try {
-        const data = await user.getById(req.params.id);
+        const promise = delayGetById(req.params.id);
+        const data = await promise.then(
+            resolve => {
+                return resolve
+            },
+            reject =>  {
+                res.status(500);
+                throw "Someone broke a promise to get by id";
+        });
+
         if (data.length > 0) {
             res.status(200).json(data[0]);
         } else {
