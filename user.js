@@ -5,26 +5,43 @@ const unflatten = flat.unflatten;
 const redisClient = redis.createClient();
 const UserData = require('./user_data.json');
 const MAX_CACHE_LENGTH = 20;
-let user_rank = 0;
 
 bluebird.promisifyAll(redis.RedisClient.prototype);
 bluebird.promisifyAll(redis.Multi.prototype);
 
+// find user in redis store by id
+const searchRedisForUser = async(id) => {
+    let userInStore;
+    const pattern = `*\\\"id\\\":${id}*`;
+
+    try {
+         await redisClient.zscan("users", 0, 'MATCH', pattern, (result) => {
+            userInStore = result;
+        });
+    } catch (error) {
+        console.log("Error looking for user in Redis store");
+    }
+
+    return userInStore;
+};
+
 const getById = async (id) => {
-    // check redis for user
     let user;
     
     try {
+        // check redis for user
+        user = await searchRedisForUser(id);
         // check store for user
-        user = UserData.filter(user => {
-            return user.id === parseInt(id);
-        });
+        if (!user) {
+            user = UserData.filter(user => {
+                return user.id === parseInt(id);
+            });
+        }
 
-        // cache user in redis or return {}
+        // cache user in redis
         if(typeof user !== "undefined" && user.length > 0) {
             const jsonUser = JSON.stringify(user);
-            user_rank = user_rank + 1;
-            let redisUserCache = await redisClient.zadd("users", user_rank, jsonUser); // adding asynchronously messes rank
+            let redisUserCache = await redisClient.lpushAsync("users", jsonUser);
         }
     } catch (error) {
         console.log(error);
@@ -38,9 +55,7 @@ const getHistory = async () => {
     let cachedUsers;
 
     try {
-        let redisCacheSize = await redisClient.zcountAsync("users", "-inf", "+inf");
-        // fetch 20 top ranked itemss
-        cachedUsers = await redisClient.zrevrangebyscoreAsync("users", redisCacheSize, redisCacheSize - MAX_CACHE_LENGTH + 1);
+        cachedUsers = await redisClient.lrangeAsync("users", 0, MAX_CACHE_LENGTH - 1);
     } catch (error) {
         console.log(error);
         throw error;
