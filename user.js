@@ -15,7 +15,7 @@ const searchRedisForUser = async(id) => {
     const pattern = `*\\\"id\\\":${id}*`;
 
     try {
-         await redisClient.zscan("users", 0, 'MATCH', pattern, (result) => {
+         await redisClient.scan("users", 0, 'MATCH', pattern, (result) => {
             userInStore = result;
         });
     } catch (error) {
