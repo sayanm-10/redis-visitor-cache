@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const user = require("./user.js");
 
-const DELAY = 0; // delay to return promise in ms
+const DELAY = 5000; // delay to return promise in ms
 
 const delayGetById = (id) => {
     return new Promise((resolve, reject) => {
